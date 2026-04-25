@@ -12,7 +12,6 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-// Health Check
 app.get('/api/services/health', (req, res) => {
   res.json({ status: 'ok', service: 'services-service' });
 });
@@ -22,6 +21,7 @@ app.get('/api/services', async (req, res) => {
     const result = await pool.query('SELECT * FROM services ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
+    console.error("❌ DATABASE ERROR:", err); // Added this line!
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -35,6 +35,7 @@ app.post('/api/services', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error("❌ INSERT ERROR:", err); // Added this line!
     res.status(500).json({ error: 'Database error' });
   }
 });
