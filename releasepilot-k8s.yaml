@@ -151,6 +151,8 @@ spec:
         env:
         - name: PORT
           value: "4001"
+        - name: DATABASE_URL
+          value: "postgresql://postgres:skyie@123@postgres:5432/releasepilot"
         - name: DB_HOST
           value: "postgres"
         - name: DB_PORT
@@ -162,7 +164,7 @@ spec:
         - name: DB_NAME
           value: "releasepilot"
 
-# --- RELEASES SERVICE ---
+nano ~/release-pilot/releasepilot-k8s.yaml# --- RELEASES SERVICE ---
 ---
 apiVersion: v1
 kind: Service
