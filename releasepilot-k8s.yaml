@@ -1,0 +1,249 @@
+# --- DATABASE ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "skyie@123"
+        - name: POSTGRES_DB
+          value: "releasepilot"
+        volumeMounts:
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+          subPath: init.sql
+      volumes:
+      - name: init-script
+        configMap:
+          name: postgres-init
+
+# --- GATEWAY ---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 4000
+    targetPort: 4000
+  selector:
+    app: gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: arittroc/releasepilot-gateway:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "4000"
+
+# --- AUTH SERVICE ---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  ports:
+  - port: 4004
+  selector:
+    app: auth-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: arittroc/releasepilot-auth-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "4004"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASS
+          value: "skyie@123"
+        - name: DB_NAME
+          value: "releasepilot"
+
+# --- SERVICES SERVICE ---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: services-service
+spec:
+  ports:
+  - port: 4001
+  selector:
+    app: services-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: services-service
+spec:
+  selector:
+    matchLabels:
+      app: services-service
+  template:
+    metadata:
+      labels:
+        app: services-service
+    spec:
+      containers:
+      - name: services-service
+        image: arittroc/releasepilot-services-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "4001"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASS
+          value: "skyie@123"
+        - name: DB_NAME
+          value: "releasepilot"
+
+# --- RELEASES SERVICE ---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: releases-service
+spec:
+  ports:
+  - port: 4002
+  selector:
+    app: releases-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: releases-service
+spec:
+  selector:
+    matchLabels:
+      app: releases-service
+  template:
+    metadata:
+      labels:
+        app: releases-service
+    spec:
+      containers:
+      - name: releases-service
+        image: arittroc/releasepilot-releases-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "4002"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASS
+          value: "skyie@123"
+        - name: DB_NAME
+          value: "releasepilot"
+
+# --- INCIDENTS SERVICE ---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: incidents-service
+spec:
+  ports:
+  - port: 4003
+  selector:
+    app: incidents-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incidents-service
+spec:
+  selector:
+    matchLabels:
+      app: incidents-service
+  template:
+    metadata:
+      labels:
+        app: incidents-service
+    spec:
+      containers:
+      - name: incidents-service
+        image: arittroc/releasepilot-incidents-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "4003"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASS
+          value: "skyie@123"
+        - name: DB_NAME
+          value: "releasepilot"

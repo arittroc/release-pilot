@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: skyie@123
+      POSTGRES_DB: releasepilot
+    ports:
+      - "5432:5432"
+    volumes:
+      # This automatically mounts and runs your SQL script on first boot!
+      - ./infra/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d releasepilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build: ./backend/gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    depends_on:
+      - auth-service
+      - services-service
+      - releases-service
+      - incidents-service
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "4004:4004"
+    environment:
+      - PORT=4004
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=skyie@123
+      - DB_NAME=releasepilot
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  services-service:
+    build: ./backend/services-service
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=skyie@123
+      - DB_NAME=releasepilot
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  releases-service:
+    build: ./backend/releases-service
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=skyie@123
+      - DB_NAME=releasepilot
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  incidents-service:
+    build: ./backend/incidents-service
+    ports:
+      - "4003:4003"
+    environment:
+      - PORT=4003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=skyie@123
+      - DB_NAME=releasepilot
+    depends_on:
+      postgres:
+        condition: service_healthy
