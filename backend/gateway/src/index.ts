@@ -10,36 +10,47 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 
-// Gateway internal health
+// Gateway internal health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'gateway' });
 });
 
-// --- HELPER: This prevents the proxy from stripping the "/api" prefix ---
-const proxyOptions = (target: string) => ({
-  target,
+// --- AUTH SERVICE (Port 4004) ---
+app.use('/api/auth', createProxyMiddleware({
+  target: 'http://auth-service:4004',
   changeOrigin: true,
-  // This ensures the full path (e.g., /api/services) is sent to the backend
-  pathRewrite: async (path: string) => path, 
-});
+  // This ensures /api/auth/login stays /api/auth/login when it hits the service
+  pathRewrite: { '^/api/auth': '/api/auth' } 
+}));
 
-// --- ROUTES ---
+// --- SERVICES API (Port 4001) ---
+app.use('/api/services', createProxyMiddleware({
+  target: 'http://services-service:4001',
+  changeOrigin: true,
+  pathRewrite: { '^/api/services': '/api/services' }
+}));
 
-// Auth Service (Port 4004)
-app.use('/api/auth', createProxyMiddleware(proxyOptions('http://auth-service:4004')));
+// --- RELEASES API (Port 4002) ---
+app.use('/api/releases', createProxyMiddleware({
+  target: 'http://releases-service:4002',
+  changeOrigin: true,
+  pathRewrite: { '^/api/releases': '/api/releases' }
+}));
 
-// Services Management (Port 4001)
-app.use('/api/services', createProxyMiddleware(proxyOptions('http://services-service:4001')));
+// --- INCIDENT RESPONSE (Port 4005) ---
+app.use('/api/incidents', createProxyMiddleware({
+  target: 'http://incident-service:4005',
+  changeOrigin: true,
+  pathRewrite: { '^/api/incidents': '/api/incidents' }
+}));
 
-// Releases Management (Port 4002)
-app.use('/api/releases', createProxyMiddleware(proxyOptions('http://releases-service:4002')));
-
-// Incident Response (Port 4005)
-app.use('/api/incidents', createProxyMiddleware(proxyOptions('http://incident-service:4005')));
-
-// Incident Health Pulse (Used by Dashboard)
-app.use('/api/incident/health', createProxyMiddleware(proxyOptions('http://incident-service:4005')));
+// --- INCIDENT HEALTH (Dashboard Pulse) ---
+app.use('/api/incident/health', createProxyMiddleware({
+  target: 'http://incident-service:4005',
+  changeOrigin: true,
+  pathRewrite: { '^/api/incident/health': '/api/incident/health' }
+}));
 
 app.listen(port, () => {
-  console.log(`🚀 Gateway Bridge Re-established on port ${port}`);
+  console.log(`🚀 Gateway Bridge Restored on port ${port}`);
 });
