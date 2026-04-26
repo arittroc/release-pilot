@@ -10,43 +10,36 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 
-// --- 1. Gateway Internal Health Check ---
+// Gateway internal health
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'gateway' });
 });
 
-// --- 2. Auth Service (Port 4004) ---
-app.use('/api/auth', createProxyMiddleware({
-  target: 'http://auth-service:4004',
+// --- HELPER: This prevents the proxy from stripping the "/api" prefix ---
+const proxyOptions = (target: string) => ({
+  target,
   changeOrigin: true,
-}));
+  // This ensures the full path (e.g., /api/services) is sent to the backend
+  pathRewrite: async (path: string) => path, 
+});
 
-// --- 3. Services Management (Port 4001) ---
-app.use('/api/services', createProxyMiddleware({
-  target: 'http://services-service:4001',
-  changeOrigin: true,
-}));
+// --- ROUTES ---
 
-// --- 4. Releases Management (Port 4002) ---
-app.use('/api/releases', createProxyMiddleware({
-  target: 'http://releases-service:4002',
-  changeOrigin: true,
-}));
+// Auth Service (Port 4004)
+app.use('/api/auth', createProxyMiddleware(proxyOptions('http://auth-service:4004')));
 
-// --- 5. Incident Response (Port 4005) ---
-// Note: We updated the target to incident-service:4005 to match our new deployment
-app.use('/api/incidents', createProxyMiddleware({
-  target: 'http://incident-service:4005',
-  changeOrigin: true,
-}));
+// Services Management (Port 4001)
+app.use('/api/services', createProxyMiddleware(proxyOptions('http://services-service:4001')));
 
-// --- 6. Incident Health Check (Dashboard Pulse) ---
-// This specific route is what makes the "Incident Response" card turn green!
-app.use('/api/incident/health', createProxyMiddleware({
-  target: 'http://incident-service:4005',
-  changeOrigin: true,
-}));
+// Releases Management (Port 4002)
+app.use('/api/releases', createProxyMiddleware(proxyOptions('http://releases-service:4002')));
+
+// Incident Response (Port 4005)
+app.use('/api/incidents', createProxyMiddleware(proxyOptions('http://incident-service:4005')));
+
+// Incident Health Pulse (Used by Dashboard)
+app.use('/api/incident/health', createProxyMiddleware(proxyOptions('http://incident-service:4005')));
 
 app.listen(port, () => {
-  console.log(`🚀 ReleasePilot API Gateway is patrolling on port ${port}`);
+  console.log(`🚀 Gateway Bridge Re-established on port ${port}`);
 });
