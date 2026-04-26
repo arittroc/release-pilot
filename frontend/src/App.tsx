@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import RegisterModal from './components/RegisterModal'
+import Login from './components/Login'
 
 interface Service {
   id: string;
   name: string;
-  slug: string; 
+  slug: string;
   description: string;
   owner_team: string;
   status: string;
@@ -27,6 +28,9 @@ const HealthPulse = ({ status }: { status: 'loading' | 'up' | 'down' }) => {
 };
 
 function App() {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [username, setUsername] = useState<string | null>(localStorage.getItem('username'));
+  
   const [services, setServices] = useState<Service[]>([]);
   const [healthStatus, setHealthStatus] = useState<Record<string, 'loading' | 'up' | 'down'>>({});
   const [loading, setLoading] = useState(true);
@@ -35,17 +39,40 @@ function App() {
 
   const API_URL = 'http://192.168.29.100:4000/api/services';
 
+  const handleLoginSuccess = (newToken: string, loggedInUser: string) => {
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('username', loggedInUser);
+    setToken(newToken);
+    setUsername(loggedInUser);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    setToken(null);
+    setUsername(null);
+    setServices([]);
+  };
+
   const fetchServices = useCallback(() => {
+    if (!token) return; // Don't fetch if not logged in
+
     setLoading(true);
     setFetchError(null);
-    
-    fetch(API_URL)
+
+    // We must pass the token in the headers so the backend knows we are authorized!
+    fetch(API_URL, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => {
+        if (res.status === 401 || res.status === 403) {
+           handleLogout(); // Token expired or invalid, kick them out
+           throw new Error("Session expired. Please log in again.");
+        }
         if (!res.ok) throw new Error(`Server Error: ${res.status}`);
         return res.json();
       })
       .then(data => {
-        // Double check that data is actually an array before setting it
         if (Array.isArray(data)) {
           setServices(data);
           data.forEach((s: Service) => checkServiceHealth(s.slug));
@@ -55,12 +82,11 @@ function App() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Fetch failed:", err);
         setFetchError(err.message);
         setLoading(false);
-        setServices([]); // Clear services to trigger the error UI
+        setServices([]);
       });
-  }, []);
+  }, [token]);
 
   const checkServiceHealth = async (slug: string) => {
     setHealthStatus(prev => ({ ...prev, [slug]: 'loading' }));
@@ -75,13 +101,19 @@ function App() {
   useEffect(() => {
     fetchServices();
     const interval = setInterval(() => {
-      if (Array.isArray(services)) {
+      if (Array.isArray(services) && token) {
         services.forEach(s => checkServiceHealth(s.slug));
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchServices, services.length]);
+  }, [fetchServices, services.length, token]);
 
+  // If no token exists, lock them out and show the Login screen!
+  if (!token) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // If they have a token, show the Dashboard!
   return (
     <div className="min-h-screen p-8 md:p-24 flex flex-col items-center">
       <RegisterModal
@@ -90,9 +122,19 @@ function App() {
         onSuccess={() => { setIsModalOpen(false); fetchServices(); }}
       />
 
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl w-full mb-16 text-center">
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white tracking-tight">ReleasePilot</h1>
-        <p className="text-xl text-slate-400">System Monitoring & Infrastructure Management</p>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl w-full mb-16 relative">
+        {/* Logout Button */}
+        <div className="absolute top-0 right-0 flex items-center gap-4">
+          <span className="text-slate-500 text-sm font-mono">OP: {username?.toUpperCase()}</span>
+          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 transition-colors">
+            [ LOGOUT ]
+          </button>
+        </div>
+
+        <div className="text-center pt-8">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white tracking-tight">ReleasePilot</h1>
+          <p className="text-xl text-slate-400">System Monitoring & Infrastructure Management</p>
+        </div>
       </motion.div>
 
       <div className="max-w-5xl w-full">
@@ -101,10 +143,6 @@ function App() {
           <button onClick={() => setIsModalOpen(true)} className="glass-button text-sm font-medium">+ Register</button>
         </div>
 
-        {/* CRITICAL CHANGE: 
-            Check if services is an array before mapping. 
-            If not, show a beautiful error panel instead of crashing.
-        */}
         {Array.isArray(services) && services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatePresence>
@@ -142,13 +180,12 @@ function App() {
             Scanning cluster for active services...
           </div>
         ) : (
-          /* Error / Empty State UI */
           <div className="glass-panel p-20 text-center border-red-500/20 bg-red-500/5">
             <div className="text-red-400 font-medium mb-2">Communication Link Severed</div>
             <p className="text-slate-500 text-sm mb-6">
               {fetchError || "The database returned an invalid response. Check backend logs."}
             </p>
-            <button 
+            <button
               onClick={fetchServices}
               className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs transition-all"
             >
