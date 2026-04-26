@@ -23,12 +23,12 @@ const pool = new Pool({
 });
 
 // Health Check (Required for your dashboard's green pulse!)
-app.get('/health', (req, res) => {
+app.get('/api/auth/health', (req, res) => {
   res.json({ status: 'ok', service: 'auth-service' });
 });
 
 // The Login Endpoint
-app.post('/login', async (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
