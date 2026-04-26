@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # Or 'self-hosted' if you set up a local runner!
+    runs-on: self-hosted  # <--- THIS IS THE MAGIC LINE
     
     steps:
       - name: Checkout Source Code
@@ -27,12 +27,7 @@ jobs:
           push: true
           tags: arittroc/releasepilot-frontend:latest
 
-      - name: Trigger Kubernetes Rolling Update
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Tell Kubernetes to pull the new image and restart the UI
-            kubectl rollout restart deployment frontend
+      - name: Local Kubernetes Update
+        run: |
+          # No SSH needed! We are already on the server.
+          kubectl rollout restart deployment frontend
