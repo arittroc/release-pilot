@@ -1,4 +1,4 @@
-# --- DATABASE ---
+# --- POSTGRES DATABASE ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:16-alpine
+        image: postgres:15
         env:
         - name: POSTGRES_USER
           value: "postgres"
@@ -32,16 +32,8 @@ spec:
           value: "skyie@123"
         - name: POSTGRES_DB
           value: "releasepilot"
-        volumeMounts:
-        - name: init-script
-          mountPath: /docker-entrypoint-initdb.d/init.sql
-          subPath: init.sql
-      volumes:
-      - name: init-script
-        configMap:
-          name: postgres-init
 
-# --- GATEWAY ---
+# --- API GATEWAY ---
 ---
 apiVersion: v1
 kind: Service
@@ -108,16 +100,6 @@ spec:
         env:
         - name: PORT
           value: "4004"
-        - name: DB_HOST
-          value: "postgres"
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_USER
-          value: "postgres"
-        - name: DB_PASS
-          value: "skyie@123"
-        - name: DB_NAME
-          value: "releasepilot"
 
 # --- SERVICES SERVICE ---
 ---
@@ -152,19 +134,9 @@ spec:
         - name: PORT
           value: "4001"
         - name: DATABASE_URL
-          value: "postgresql://postgres:skyie@123@postgres:5432/releasepilot"
-        - name: DB_HOST
-          value: "postgres"
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_USER
-          value: "postgres"
-        - name: DB_PASS
-          value: "skyie@123"
-        - name: DB_NAME
-          value: "releasepilot"
+          value: "postgresql://postgres:skyie%40123@postgres:5432/releasepilot"
 
-nano ~/release-pilot/releasepilot-k8s.yaml# --- RELEASES SERVICE ---
+# --- RELEASES SERVICE ---
 ---
 apiVersion: v1
 kind: Service
@@ -196,16 +168,6 @@ spec:
         env:
         - name: PORT
           value: "4002"
-        - name: DB_HOST
-          value: "postgres"
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_USER
-          value: "postgres"
-        - name: DB_PASS
-          value: "skyie@123"
-        - name: DB_NAME
-          value: "releasepilot"
 
 # --- INCIDENTS SERVICE ---
 ---
@@ -239,13 +201,3 @@ spec:
         env:
         - name: PORT
           value: "4003"
-        - name: DB_HOST
-          value: "postgres"
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_USER
-          value: "postgres"
-        - name: DB_PASS
-          value: "skyie@123"
-        - name: DB_NAME
-          value: "releasepilot"
