@@ -29,7 +29,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Pass the token up to the main App
       onLoginSuccess(data.token, data.user.username);
     } catch (err: any) {
       setError(err.message);

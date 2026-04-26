@@ -55,18 +55,17 @@ function App() {
   };
 
   const fetchServices = useCallback(() => {
-    if (!token) return; // Don't fetch if not logged in
+    if (!token) return;
 
     setLoading(true);
     setFetchError(null);
 
-    // We must pass the token in the headers so the backend knows we are authorized!
     fetch(API_URL, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => {
         if (res.status === 401 || res.status === 403) {
-           handleLogout(); // Token expired or invalid, kick them out
+           handleLogout();
            throw new Error("Session expired. Please log in again.");
         }
         if (!res.ok) throw new Error(`Server Error: ${res.status}`);
@@ -108,12 +107,10 @@ function App() {
     return () => clearInterval(interval);
   }, [fetchServices, services.length, token]);
 
-  // If no token exists, lock them out and show the Login screen!
   if (!token) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // If they have a token, show the Dashboard!
   return (
     <div className="min-h-screen p-8 md:p-24 flex flex-col items-center">
       <RegisterModal
@@ -123,7 +120,6 @@ function App() {
       />
 
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl w-full mb-16 relative">
-        {/* Logout Button */}
         <div className="absolute top-0 right-0 flex items-center gap-4">
           <span className="text-slate-500 text-sm font-mono">OP: {username?.toUpperCase()}</span>
           <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 transition-colors">
@@ -197,5 +193,4 @@ function App() {
     </div>
   )
 }
-
 export default App
