@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted  # <--- THIS IS THE MAGIC LINE
+    runs-on: self-hosted
     
     steps:
       - name: Checkout Source Code
@@ -29,5 +29,5 @@ jobs:
 
       - name: Local Kubernetes Update
         run: |
-          # No SSH needed! We are already on the server.
+          # Since the runner is on the server, we run kubectl commands directly!
           kubectl rollout restart deployment frontend
