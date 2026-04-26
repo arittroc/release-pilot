@@ -19,7 +19,7 @@ app.use(express.json());
 
 // Database Connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@postgres:5432/releasepilot',
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:skyie%40123@postgres:5432/releasepilot',
 });
 
 // Health Check (Required for your dashboard's green pulse!)
