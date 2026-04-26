@@ -3,3 +3,8 @@ backend/*/node_modules/
 actions-runner/
 .env
 dist/
+actions-runner/
+actions-runner-linux-x64-*.tar.gz
+externals/
+node_modules/
+.env

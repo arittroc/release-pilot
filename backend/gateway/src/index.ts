@@ -1,53 +1,32 @@
 import express from 'express';
 import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 4000;
-
 app.use(cors());
 
-// Gateway internal health
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'gateway' });
+// THE LOGGING FIX: This will show you exactly what is failing
+app.use((req, res, next) => {
+  console.log(`[GATEWAY INCOMING]: ${req.method} ${req.url}`);
+  next();
 });
 
-// --- CLUSTER-ALIGNED ROUTES ---
-
-// 1. Auth Service (Port 4004)
-app.use('/api/auth', createProxyMiddleware({
-  target: 'http://auth-service:4004',
+// Helper to create a non-stripping proxy
+const proxy = (target: string) => createProxyMiddleware({
+  target,
   changeOrigin: true,
-  // We DO NOT strip the path because your backend routes include /api/auth
-}));
-
-// 2. Services Management (Port 4001)
-app.use('/api/services', createProxyMiddleware({
-  target: 'http://services-service:4001',
-  changeOrigin: true,
-}));
-
-// 3. Releases Management (Port 4002)
-app.use('/api/releases', createProxyMiddleware({
-  target: 'http://releases-service:4002',
-  changeOrigin: true,
-}));
-
-// 4. Incident Response (MATCHED TO PORT 4003 PER YOUR SVC LIST)
-app.use('/api/incidents', createProxyMiddleware({
-  target: 'http://incidents-service:4003',
-  changeOrigin: true,
-}));
-
-// 5. Incident Health Pulse
-app.use('/api/incident/health', createProxyMiddleware({
-  target: 'http://incidents-service:4003',
-  changeOrigin: true,
-}));
-
-app.listen(port, () => {
-  console.log(`🚀 Gateway Synced with Cluster on port ${port}`);
+  // pathRewrite is REMOVED to prevent 404s on the backend
 });
+
+app.use('/api/auth', proxy('http://auth-service:4004'));
+app.use('/api/services', proxy('http://services-service:4001'));
+app.use('/api/releases', proxy('http://releases-service:4002'));
+app.use('/api/incidents', proxy('http://incidents-service:4003'));
+
+// Global 404 Handler for the Gateway
+app.use((req, res) => {
+  console.log(`[GATEWAY 404]: No match for ${req.url}`);
+  res.status(404).json({ error: "Gateway: Route not found", path: req.url });
+});
+
+app.listen(4000, () => console.log('🚀 GATEWAY SYNCED & LOGGING'));

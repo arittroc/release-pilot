@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-service
+  template:
+    metadata:
+      labels:
+        app: incident-service
+    spec:
+      containers:
+      - name: incident-service
+        image: arittroc/releasepilot-incident:latest
+        ports:
+        - containerPort: 4003
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:skyie%40123@postgres:5432/releasepilot"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-service
+spec:
+  selector:
+    app: incident-service
+  ports:
+  - port: 4003
+    targetPort: 4003

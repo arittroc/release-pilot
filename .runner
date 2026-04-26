@@ -1,0 +1,11 @@
+﻿{
+  "agentId": 22,
+  "agentName": "skyieserver",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus14.actions.githubusercontent.com/QT0Almcr5vaQEJge53JXCDmw2JIy8d47e3ib9tKu4fXj4YNj4E/",
+  "gitHubUrl": "https://github.com/arittroc/release-pilot",
+  "workFolder": "_work",
+  "useV2Flow": true,
+  "serverUrlV2": "https://broker.actions.githubusercontent.com/"
+}

@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "arittroc/release-pilot",
+  "pipelineDirectory": "release-pilot",
+  "workspaceDirectory": "release-pilot/release-pilot",
+  "repositories": {
+    "arittroc/release-pilot": {
+      "repositoryPath": "release-pilot/release-pilot",
+      "lastRunOn": "04/26/2026 19:48:37 +00:00"
+    }
+  },
+  "lastRunOn": "04/26/2026 20:25:13 +00:00"
+}
