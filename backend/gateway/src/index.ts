@@ -15,47 +15,39 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'gateway' });
 });
 
-/**
- * FIXED PROXY LOGIC:
- * We use a "context" array to tell the proxy NOT to strip the path.
- * This ensures /api/auth/login reaches the service as /api/auth/login.
- */
+// --- CLUSTER-ALIGNED ROUTES ---
 
 // 1. Auth Service (Port 4004)
 app.use('/api/auth', createProxyMiddleware({
   target: 'http://auth-service:4004',
   changeOrigin: true,
-  pathRewrite: (path) => path, // Keeps the path exactly as it is
+  // We DO NOT strip the path because your backend routes include /api/auth
 }));
 
-// 2. Services API (Port 4001)
+// 2. Services Management (Port 4001)
 app.use('/api/services', createProxyMiddleware({
   target: 'http://services-service:4001',
   changeOrigin: true,
-  pathRewrite: (path) => path,
 }));
 
-// 3. Releases API (Port 4002)
+// 3. Releases Management (Port 4002)
 app.use('/api/releases', createProxyMiddleware({
   target: 'http://releases-service:4002',
   changeOrigin: true,
-  pathRewrite: (path) => path,
 }));
 
-// 4. Incident Response (Port 4005) - MATCHED TO PLURAL "incidents-service"
+// 4. Incident Response (MATCHED TO PORT 4003 PER YOUR SVC LIST)
 app.use('/api/incidents', createProxyMiddleware({
-  target: 'http://incidents-service:4005',
+  target: 'http://incidents-service:4003',
   changeOrigin: true,
-  pathRewrite: (path) => path,
 }));
 
-// 5. Incident Health (Dashboard Pulse)
+// 5. Incident Health Pulse
 app.use('/api/incident/health', createProxyMiddleware({
-  target: 'http://incidents-service:4005',
+  target: 'http://incidents-service:4003',
   changeOrigin: true,
-  pathRewrite: (path) => path,
 }));
 
 app.listen(port, () => {
-  console.log(`🚀 Gateway Bridge Finalized on port ${port}`);
+  console.log(`🚀 Gateway Synced with Cluster on port ${port}`);
 });
