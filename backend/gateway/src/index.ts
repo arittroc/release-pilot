@@ -11,6 +11,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Self-Health Check (Handles both single and double /api prefix)
+app.get(['/api/health', '/api/api/health'], (req, res) => {
+  res.json({ status: 'ok', service: 'gateway' });
+});
+
 // --- HELPER FUNCTION: PRESERVES THE FULL URL ---
 const keepFullUrl = (target: string) => ({
   target,
