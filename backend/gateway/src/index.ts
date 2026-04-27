@@ -7,42 +7,28 @@ app.use(cors());
 
 // Logger
 app.use((req, res, next) => {
-  console.log(`[GATEWAY INCOMING]: ${req.method} ${req.url}`);
+  console.log(`[GATEWAY]: Intercepted ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// --- CONTEXT-BASED PROXIES ---
-// This guarantees that /api/auth/login stays exactly /api/auth/login
-
-app.use(createProxyMiddleware('/api/auth', {
-  target: 'http://auth-service:4004',
+// --- HELPER FUNCTION: PRESERVES THE FULL URL ---
+const keepFullUrl = (target: string) => ({
+  target,
   changeOrigin: true,
-}));
+  // This is the magic: It ignores Express's chopping and forces the full path
+  pathRewrite: (path: string, req: express.Request) => req.originalUrl,
+});
 
-app.use(createProxyMiddleware('/api/services', {
-  target: 'http://services-service:4001',
-  changeOrigin: true,
-}));
-
-app.use(createProxyMiddleware('/api/releases', {
-  target: 'http://releases-service:4002',
-  changeOrigin: true,
-}));
-
-app.use(createProxyMiddleware('/api/incidents', {
-  target: 'http://incidents-service:4003',
-  changeOrigin: true,
-}));
-
-app.use(createProxyMiddleware('/api/incident/health', {
-  target: 'http://incidents-service:4003',
-  changeOrigin: true,
-}));
+// --- ROUTES ---
+app.use('/api/auth', createProxyMiddleware(keepFullUrl('http://auth-service:4004')));
+app.use('/api/services', createProxyMiddleware(keepFullUrl('http://services-service:4001')));
+app.use('/api/releases', createProxyMiddleware(keepFullUrl('http://releases-service:4002')));
+app.use('/api/incidents', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
+app.use('/api/incident/health', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
 
 // Global JSON 404 Handler
 app.use((req, res) => {
-  console.log(`[GATEWAY 404]: No match for ${req.url}`);
-  res.status(404).json({ error: "Gateway: Route not found", path: req.url });
+  res.status(404).json({ error: "Gateway: Route not found", path: req.originalUrl });
 });
 
-app.listen(4000, () => console.log('🚀 GATEWAY LIVE (CONTEXT-PROXY MODE)'));
+app.listen(4000, () => console.log('🚀 GATEWAY LIVE (FULL URL PRESERVATION MODE)'));
