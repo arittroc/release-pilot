@@ -30,7 +30,7 @@ app.use('/api/services', createProxyMiddleware(keepFullUrl('http://services-serv
 app.use('/api/releases', createProxyMiddleware(keepFullUrl('http://releases-service:4002')));
 app.use('/api/incidents', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
 app.use('/api/incident/health', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
-app.use('/api/notifications', createProxyMiddleware({
+app.use('/api/noti-service', createProxyMiddleware({
   target: 'http://noti-service:4005',
   changeOrigin: true,
   pathRewrite: keepFullUrl,
