@@ -14,8 +14,15 @@ spec:
     spec:
       containers:
       - name: noti-service
-        image: arittroc/noti-service:latest
+        image: arittroc/releasepilot-noti-service:latest
         imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"      # 50 millicores (5% of 1 CPU core)
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
         ports:
         - containerPort: 4005
 ---
