@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // The exact endpoint your React dashboard is pinging for health!
-app.get('/api/noti/health', (req, res) => {
+app.get(['/health', '/api/noti/health'], (req, res) => {
   res.json({ status: 'ok', service: 'noti-service' });
 });
 
