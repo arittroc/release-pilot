@@ -5,35 +5,36 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 const app = express();
 app.use(cors());
 
-// The Logger: Still active so we can watch the traffic
+// Logger
 app.use((req, res, next) => {
   console.log(`[GATEWAY INCOMING]: ${req.method} ${req.url}`);
   next();
 });
 
-// 1. AUTH SERVICE: Strips the prefix (so /api/auth/login becomes /login)
-app.use('/api/auth', createProxyMiddleware({
+// --- CONTEXT-BASED PROXIES ---
+// This guarantees that /api/auth/login stays exactly /api/auth/login
+
+app.use(createProxyMiddleware('/api/auth', {
   target: 'http://auth-service:4004',
   changeOrigin: true,
-  pathRewrite: { '^/api/auth': '' }, 
 }));
 
-// 2. SERVICES API: Strips the prefix
-app.use('/api/services', createProxyMiddleware({
+app.use(createProxyMiddleware('/api/services', {
   target: 'http://services-service:4001',
   changeOrigin: true,
-  pathRewrite: { '^/api/services': '' },
 }));
 
-// 3. RELEASES API: Strips the prefix
-app.use('/api/releases', createProxyMiddleware({
+app.use(createProxyMiddleware('/api/releases', {
   target: 'http://releases-service:4002',
   changeOrigin: true,
-  pathRewrite: { '^/api/releases': '' },
 }));
 
-// 4. INCIDENTS API: NOT stripped (because we hardcoded the full /api/incidents path yesterday)
-app.use('/api/incidents', createProxyMiddleware({
+app.use(createProxyMiddleware('/api/incidents', {
+  target: 'http://incidents-service:4003',
+  changeOrigin: true,
+}));
+
+app.use(createProxyMiddleware('/api/incident/health', {
   target: 'http://incidents-service:4003',
   changeOrigin: true,
 }));
@@ -44,4 +45,4 @@ app.use((req, res) => {
   res.status(404).json({ error: "Gateway: Route not found", path: req.url });
 });
 
-app.listen(4000, () => console.log('🚀 GATEWAY LIVE & STRIPPING PREFIXES'));
+app.listen(4000, () => console.log('🚀 GATEWAY LIVE (CONTEXT-PROXY MODE)'));
