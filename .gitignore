@@ -8,3 +8,11 @@ actions-runner-linux-x64-*.tar.gz
 externals/
 node_modules/
 .env
+_work/
+_diag/
+actions-runner/
+*.log
+_work/
+_diag/
+actions-runner/
+*.log
