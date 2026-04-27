@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted 
+    runs-on: self-hosted
 
     steps:
     - name: Checkout Code
@@ -22,7 +22,8 @@ jobs:
     - name: Build and Push Images
       run: |
         export DOCKER_USER="${{ secrets.DOCKER_USERNAME }}"
-        for service in auth-service services-service releases-service incidents-service gateway; do
+        # ADDED noti-service TO THIS LIST:
+        for service in auth-service services-service releases-service incidents-service gateway noti-service; do
           docker build -t $DOCKER_USER/releasepilot-$service:latest ./backend/$service
           docker push $DOCKER_USER/releasepilot-$service:latest
         done
@@ -34,3 +35,5 @@ jobs:
         kubectl rollout restart deployment/releases-service
         kubectl rollout restart deployment/incidents-service
         kubectl rollout restart deployment/gateway
+        # ADDED THE RESTART COMMAND FOR NOTI-SERVICE:
+        kubectl rollout restart deployment/noti-service
