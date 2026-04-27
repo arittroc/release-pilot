@@ -31,6 +31,8 @@ app.use('/api/releases', createProxyMiddleware(keepFullUrl('http://releases-serv
 app.use('/api/incidents', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
 app.use('/api/incident/health', createProxyMiddleware(keepFullUrl('http://incidents-service:4003')));
 
+app.use('/api/notifications', createProxy('http://noti-service:4005'));
+
 // Global JSON 404 Handler
 app.use((req, res) => {
   res.status(404).json({ error: "Gateway: Route not found", path: req.originalUrl });
