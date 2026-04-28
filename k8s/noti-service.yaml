@@ -16,15 +16,37 @@ spec:
       - name: noti-service
         image: arittroc/releasepilot-noti-service:latest
         imagePullPolicy: Always
+        # 1. Inject the Secret as an Environment Variable
+        env:
+        - name: DB_PASSWORD 
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+        # 2. Resource Management
         resources:
           requests:
             memory: "64Mi"
-            cpu: "50m"      # 50 millicores (5% of 1 CPU core)
+            cpu: "50m"
           limits:
             memory: "128Mi"
             cpu: "100m"
+        # 3. Networking
         ports:
         - containerPort: 4005
+        # 4. Self-Healing Probes
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4005
+          initialDelaySeconds: 30  # Give it time to boot up
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4005
+          initialDelaySeconds: 10
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
