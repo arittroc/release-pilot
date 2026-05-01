@@ -21,10 +21,8 @@ spec:
           value: "postgres"
         - name: DB_USER
           value: "postgres"
-        # --- Pointing to the correct room! ---
         - name: DB_NAME
           value: "releasepilot"
-        # -------------------------------------
         - name: DB_PORT
           value: "5432"
         - name: DB_PASS
@@ -34,6 +32,22 @@ spec:
               key: password
         ports:
         - containerPort: 4001
+        livenessProbe:
+          httpGet:
+            path: /api/services/health
+            port: 4001
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/services/health
+            port: 4001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -44,5 +58,5 @@ spec:
     app: services-service
   ports:
     - protocol: TCP
-      port: 4006
+      port: 4001
       targetPort: 4001

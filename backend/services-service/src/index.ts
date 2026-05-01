@@ -35,8 +35,8 @@ app.post('/api/services', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'INSERT INTO services (id, name, slug, description, owner_team, repo_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [newId, name, slug, description, owner_team, repo_url]
+      'INSERT INTO services (id, name, slug, description, owner_team, repo_url, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [newId, name, slug, description, owner_team, repo_url, 'Healthy']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

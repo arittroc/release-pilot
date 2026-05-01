@@ -30,7 +30,7 @@ const HealthPulse = ({ status }: { status: 'loading' | 'up' | 'down' }) => {
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [username, setUsername] = useState<string | null>(localStorage.getItem('username'));
-  
+
   const [services, setServices] = useState<Service[]>([]);
   const [healthStatus, setHealthStatus] = useState<Record<string, 'loading' | 'up' | 'down'>>({});
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,10 @@ function App() {
   const checkServiceHealth = async (slug: string) => {
     setHealthStatus(prev => ({ ...prev, [slug]: 'loading' }));
     try {
-      const res = await fetch(`http://192.168.29.100:4000/api/${slug.split('-')[0]}/health`);
+      const url = slug === 'frontend-portal'
+        ? 'http://releasepilot.local'
+        : `http://192.168.29.100:4000/api/${slug.split('-')[0]}/health`;
+      const res = await fetch(url, { method: 'HEAD' });
       setHealthStatus(prev => ({ ...prev, [slug]: res.ok ? 'up' : 'down' }));
     } catch {
       setHealthStatus(prev => ({ ...prev, [slug]: 'down' }));
@@ -142,7 +145,13 @@ function App() {
         {Array.isArray(services) && services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatePresence>
-              {services.map((service, index) => (
+              {services.map((service, index) => {
+                const live = healthStatus[service.slug];
+                const effectiveStatus: 'up' | 'down' =
+                  live === 'up' || service.status === 'Healthy' || service.status === 'UP'
+                    ? 'up'
+                    : 'down';
+                return (
                 <motion.div
                   key={service.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -153,13 +162,13 @@ function App() {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center">
-                      <HealthPulse status={healthStatus[service.slug] || 'loading'} />
+                      <HealthPulse status={effectiveStatus} />
                       <h3 className="text-xl font-medium text-white">{service.name}</h3>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest border ${
-                      healthStatus[service.slug] === 'up' ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-red-500/30 text-red-400 bg-red-500/5'
+                      effectiveStatus === 'up' ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-red-500/30 text-red-400 bg-red-500/5'
                     }`}>
-                      {healthStatus[service.slug]?.toUpperCase() || 'CHECKING'}
+                      {effectiveStatus === 'up' ? 'UP' : 'DOWN'}
                     </span>
                   </div>
                   <p className="text-slate-400 text-sm mb-6 line-clamp-1">{service.description}</p>
@@ -168,7 +177,8 @@ function App() {
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity">ID: {service.id.slice(0, 8)}</span>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </AnimatePresence>
           </div>
         ) : loading ? (

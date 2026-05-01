@@ -25,9 +25,13 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }: RegisterMo
     setError(null);
 
     try {
-      const response = await fetch('http://192.168.29.100:4000/api/services', {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://api.releasepilot.local/api/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
 
