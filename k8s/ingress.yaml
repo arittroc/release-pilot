@@ -4,9 +4,8 @@ metadata:
   name: releasepilot-ingress
   namespace: default
   annotations:
-    # Traefik strips the path prefix before forwarding — not needed here
-    # since all three hosts route to the service root, but good to be explicit.
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    cert-manager.io/cluster-issuer: "local-selfsigned-issuer"
 spec:
   ingressClassName: traefik
   rules:
@@ -17,7 +16,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: frontend-service
                 port:
                   number: 80
 
@@ -42,3 +41,9 @@ spec:
                 name: grafana-service
                 port:
                   number: 3000
+  tls:
+    - hosts:
+        - releasepilot.local
+        - api.releasepilot.local
+        - grafana.releasepilot.local
+      secretName: releasepilot-tls-cert
